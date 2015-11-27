@@ -1,19 +1,16 @@
 package com.adobe.http.parse;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * Created by jhutchins on 11/25/15.
  */
 
 @Getter
-@Builder
 @ToString
 @EqualsAndHashCode
+@AllArgsConstructor
 public class HttpHeader {
     private String name;
-    private String version;
+    private String value;
 }
