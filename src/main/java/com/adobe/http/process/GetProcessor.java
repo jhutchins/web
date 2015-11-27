@@ -61,8 +61,7 @@ public class GetProcessor implements HttpProcessor {
                     fileChannel.transferTo(0, file.length(), channel);
                 }
             } else {
-                this.writeStatus(channel, HttpResponseStatus.NOT_FOUND);
-                this.writeHeaders(channel);
+                NOT_FOUND_WRITER.write(channel);
             }
         }
     }
