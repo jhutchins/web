@@ -6,7 +6,7 @@ import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.List;
 
 /**
@@ -20,7 +20,7 @@ public abstract class AbstractResponseWriter implements ResponseWriter {
     private final List<HttpHeader> headers = Lists.newArrayList(
             new HttpHeader("Server", "Test Server"));
 
-    protected void writeToChannel(String message, SocketChannel channel) throws IOException {
+    protected void writeToChannel(String message, WritableByteChannel channel) throws IOException {
         byte[] bytes = message.getBytes();
         int i = 0;
         this.buffer.clear();
@@ -41,15 +41,15 @@ public abstract class AbstractResponseWriter implements ResponseWriter {
         }
     }
 
-    protected void writeStatus(SocketChannel channel, HttpResponseStatus status) throws IOException {
+    protected void writeStatus(WritableByteChannel channel, HttpResponseStatus status) throws IOException {
         this.writeToChannel(String.format("HTTP/1.1 %s %s\r\n", status.getCode(), status.getReason()), channel);
     }
 
-    protected void writeHeaders(SocketChannel channel, HttpHeader... headers) throws IOException {
+    protected void writeHeaders(WritableByteChannel channel, HttpHeader... headers) throws IOException {
         writeHeaders(channel, Lists.newArrayList(headers));
     }
 
-    protected void writeHeaders(SocketChannel channel, List<HttpHeader> headers) throws IOException {
+    protected void writeHeaders(WritableByteChannel channel, List<HttpHeader> headers) throws IOException {
         List<HttpHeader> headersToWrite = Lists.newArrayList(headers);
         headersToWrite.addAll(this.headers);
         for(HttpHeader header : headersToWrite) {

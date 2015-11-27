@@ -5,7 +5,7 @@ import com.adobe.http.models.HttpResponseStatus;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class StatusResponseWriter extends AbstractResponseWriter {
     }
 
     @Override
-    public void write(SocketChannel channel) throws IOException {
+    public void write(WritableByteChannel channel) throws IOException {
         this.writeStatus(channel, this.status);
         this.writeHeaders(channel, this.headers);
     }
