@@ -1,4 +1,4 @@
-package com.adobe.http.process;
+package com.adobe.http.process.response;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;

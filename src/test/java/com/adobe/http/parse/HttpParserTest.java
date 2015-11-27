@@ -2,11 +2,11 @@ package com.adobe.http.parse;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.HttpRequest;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.net.URI;
 
 /**
  * Created by jhutchins on 11/25/15.
@@ -26,7 +26,7 @@ public class HttpParserTest {
                 ("GET /path HTTP/1.1\r\n" +
                 "Accept: application/json\r\n" +
                 "\r\n").getBytes();
-        HttpMessage expected = HttpMessage.builder()
+        HttpRequest expected = HttpRequest.builder()
                 .path("/path")
                 .method("GET")
                 .version("HTTP/1.1")
@@ -49,7 +49,7 @@ public class HttpParserTest {
                         "Accept: application/json\r\n" +
                         "\r\n" +
                         "uri=something&parm=good").getBytes();
-        HttpMessage expected = HttpMessage.builder()
+        HttpRequest expected = HttpRequest.builder()
                 .path("/path")
                 .method("POST")
                 .version("HTTP/1.1")

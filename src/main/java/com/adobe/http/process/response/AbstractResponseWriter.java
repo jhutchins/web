@@ -1,6 +1,7 @@
-package com.adobe.http.process;
+package com.adobe.http.process.response;
 
-import com.adobe.http.parse.HttpHeader;
+import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.HttpResponseStatus;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -10,6 +11,8 @@ import java.util.List;
 
 /**
  * Created by jhutchins on 11/27/15.
+ *
+ * Class to facilitate the writting of response writers
  */
 public abstract class AbstractResponseWriter implements ResponseWriter {
 

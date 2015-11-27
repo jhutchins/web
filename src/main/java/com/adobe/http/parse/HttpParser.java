@@ -1,5 +1,7 @@
 package com.adobe.http.parse;
 
+import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.HttpRequest;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -19,10 +21,10 @@ public class HttpParser {
 
     private State state = State.METHOD;
     private StringBuilder current = new StringBuilder();
-    private final HttpMessage.Builder builder = HttpMessage.builder();
+    private final HttpRequest.Builder builder = HttpRequest.builder();
     private final List<HttpHeader> headers = Lists.newLinkedList();
 
-    public HttpMessage getMessage() {
+    public HttpRequest getMessage() {
         return builder.build();
     }
 

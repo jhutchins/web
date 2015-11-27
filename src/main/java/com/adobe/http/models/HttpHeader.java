@@ -1,4 +1,4 @@
-package com.adobe.http.parse;
+package com.adobe.http.models;
 
 import lombok.*;
 

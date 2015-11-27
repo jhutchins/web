@@ -1,6 +1,7 @@
 package com.adobe.http.process;
 
-import com.adobe.http.parse.HttpMessage;
+import com.adobe.http.models.HttpRequest;
+import com.adobe.http.process.response.ResponseWriter;
 
 import java.nio.channels.SocketChannel;
 
@@ -9,7 +10,7 @@ import java.nio.channels.SocketChannel;
  */
 public interface HttpProcessor {
 
-    ResponseWriter process(HttpMessage request, SocketChannel channel);
+    ResponseWriter process(HttpRequest request, SocketChannel channel);
 
     String getType();
 }

@@ -1,9 +1,8 @@
-package com.adobe.http.parse;
+package com.adobe.http.models;
 
 import lombok.Builder;
 import lombok.Getter;
 
-import java.net.URI;
 import java.util.List;
 
 /**
@@ -12,7 +11,7 @@ import java.util.List;
 
 @Getter
 @Builder(builderClassName = "Builder")
-public class HttpMessage {
+public class HttpRequest {
 
     private final String method;
     private final String path;
