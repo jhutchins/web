@@ -63,21 +63,24 @@ public class GetProcessor implements HttpProcessor {
             return NOT_FOUND_WRITER;
         }
 
-        // Check we're not breaking out of the root dir
         if (!target.startsWith(this.base)) {
+            // Check we're not breaking out of the root dir
             return NOT_FOUND_WRITER;
         } else if (!request.getIfNoneMatch().map(header -> header.noneMatch(etag)).orElse(true)) {
+            // Return 304 is ETag matches
             return new StatusResponseWriter(
                     HttpResponseStatus.NOT_MODIFIED,
                     new HttpHeader("ETag", etag),
                     new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
         } else if (!request.getIfNoneMatch().isPresent()
                 && !request.getIfModifiedSince().map(header -> header.isModified(lastModified)).orElse(true)) {
+            // Return 304 is not modified and no If-None-Match
             return new StatusResponseWriter(
                     HttpResponseStatus.NOT_MODIFIED,
                     new HttpHeader("ETag", etag),
                     new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
         } else {
+            // Standard response
             return new GetResponseWriter(target, lastModified, etag);
         }
     }
@@ -101,6 +104,7 @@ public class GetProcessor implements HttpProcessor {
                             new HttpHeader("Content-Length", "" + file.length()),
                             new HttpHeader("ETag", etag),
                             new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
+                    // Zero copy the data over
                     fileChannel.transferTo(0, file.length(), channel);
                 }
             } else {
