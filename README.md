@@ -1,8 +1,6 @@
 #Intro
 This is a simple file based web server. It supports GET requests to retrieve files stored at a configured location.
 
-It currently exists without 
-
 ## Build
 ```
 mvn install
