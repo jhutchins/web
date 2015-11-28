@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,5 +38,11 @@ public class HttpRequest {
             parsedHeaders.put(name, time);
         }
         return time;
+    }
+
+    public static class Builder {
+        public HttpRequest build() {
+            return new HttpRequest(method, path, version, headers != null ? headers : Collections.emptyList(), data);
+        }
     }
 }
