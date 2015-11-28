@@ -1,7 +1,7 @@
 package com.adobe.http.process.response;
 
 import com.adobe.http.HttpUtils;
-import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.headers.HttpHeader;
 import com.adobe.http.models.HttpResponseStatus;
 import com.google.common.collect.Lists;
 

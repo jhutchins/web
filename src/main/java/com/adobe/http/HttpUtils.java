@@ -18,7 +18,7 @@ public class HttpUtils {
         return HTTP_DATE_FORMATTER.format(instant);
     }
 
-    public static Instant covertStringToInstant(String date) {
+    public static Instant convertStringToInstant(String date) {
         return HTTP_DATE_FORMATTER.parse(date, Instant::from);
     }
 }

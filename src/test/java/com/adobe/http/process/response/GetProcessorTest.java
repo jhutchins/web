@@ -1,6 +1,9 @@
 package com.adobe.http.process.response;
 
+import com.adobe.http.HttpUtils;
 import com.adobe.http.models.HttpRequest;
+import com.adobe.http.models.headers.IfModifiedSince;
+import com.adobe.http.models.headers.IfNoneMatch;
 import com.adobe.http.process.EtagManager;
 import com.adobe.http.process.GetProcessor;
 import org.junit.After;
@@ -26,6 +29,7 @@ import static org.mockito.Mockito.*;
 public class GetProcessorTest {
     private static final String BASE_DIR = "./test/public";
     private static final String ETAG = "923466024";
+    public static final String DATA = "The data";
 
     @Mock
     private WritableByteChannel channel;
@@ -58,6 +62,7 @@ public class GetProcessorTest {
         when(manager.retrieve(any(), any())).thenReturn(ETAG);
         when(request.getPath()).thenReturn("/a");
         when(request.getIfModifiedSince()).thenReturn(Optional.empty());
+        when(request.getIfNoneMatch()).thenReturn(Optional.empty());
     }
 
     @After
@@ -74,61 +79,101 @@ public class GetProcessorTest {
         file.delete();
     }
 
+    private void verifyNotFound() {
+        assertThat(response.toString()).contains("404 Not Found").doesNotContain(DATA);
+    }
+
+    private void verifyNotModified() {
+        assertThat(response.toString()).contains("304 Not Modified").doesNotContain(DATA).contains("ETag: " + ETAG);
+    }
+
+    private void verifyOk() {
+        assertThat(response.toString()).contains("200 OK").contains(DATA).contains("ETag: " + ETAG);
+    }
+
     @Test
     public void testFileNotFound() throws Exception {
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("404 Not Found");
+        verifyNotFound();
     }
 
     @Test
     public void testFileExists() throws Exception {
-        final String data = "The data";
-        Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("200 OK").contains(data).contains("Etag: " + ETAG);
+        verifyOk();
     }
 
     @Test
     public void testNotFoundOutsideBaseDir() throws Exception {
-        final String data = "The data";
-        Files.write(Paths.get(BASE_DIR).getParent().resolve("a"), data.getBytes());
+        Files.write(Paths.get(BASE_DIR).getParent().resolve("a"), DATA.getBytes());
         when(request.getPath()).thenReturn("/../a");
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-
-        assertThat(response.toString()).contains("404 Not Found").doesNotContain(data);
+        verifyNotFound();
     }
 
     @Test
     public void testResolvesRelativePathsInBaseDir() throws Exception {
-        final String data = "The data";
         Paths.get(BASE_DIR, "subDir").toFile().mkdirs();
-        Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
         when(request.getPath()).thenReturn("/subDir/../a");
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("200 OK").contains(data).contains("Etag: " + ETAG);
+        verifyOk();
     }
 
     @Test
     public void testReturnsNotModifiedWhenItShould() throws Exception {
-        final String data = "The data";
-        Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
-        when(request.getIfModifiedSince()).thenReturn(Optional.of(Instant.now().plusSeconds(5)));
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        IfModifiedSince modifiedSince = new IfModifiedSince(
+                HttpUtils.convertInstantToString(Instant.now().plusSeconds(5)));
+        when(request.getIfModifiedSince()).thenReturn(Optional.of(modifiedSince));
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("304 Not Modified").doesNotContain(data);
+        verifyNotModified();
     }
 
     @Test
     public void testDoesNotReturnsNotModifiedWhenItShouldNot() throws Exception {
-        final String data = "The data";
-        Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
-        when(request.getIfModifiedSince()).thenReturn(Optional.of(Instant.now().minusSeconds(5)));
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        IfModifiedSince modifiedSince = new IfModifiedSince(
+                HttpUtils.convertInstantToString(Instant.now().minusSeconds(5)));
+        when(request.getIfModifiedSince()).thenReturn(Optional.of(modifiedSince));
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("200 OK").contains(data).contains("Etag: " + ETAG);
+        verifyOk();
+    }
+
+    @Test
+    public void testDoesReturnNotModifiedWhenNoneMatchPresentWithMatch() throws Exception {
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        when(request.getIfNoneMatch()).thenReturn(Optional.of(new IfNoneMatch("\"" + ETAG + "\"")));
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        verifyNotModified();
+    }
+
+    @Test
+    public void testDoesNotReturnNotModifiedWhenNoneMatchPresentWithoutMatch() throws Exception {
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        when(request.getIfNoneMatch()).thenReturn(Optional.of(new IfNoneMatch("\"no match\"")));
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        verifyOk();
+    }
+
+    @Test
+    public void testDoesNotReturnNotModifiedWhenNoneMatchPresent() throws Exception {
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        IfModifiedSince modifiedSince = new IfModifiedSince(
+                HttpUtils.convertInstantToString(Instant.now().plusSeconds(5)));
+        when(request.getIfModifiedSince()).thenReturn(Optional.of(modifiedSince));
+        when(request.getIfNoneMatch()).thenReturn(Optional.of(new IfNoneMatch("\"no match\"")));
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        verifyOk();
     }
 }

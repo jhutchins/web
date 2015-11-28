@@ -1,6 +1,6 @@
 package com.adobe.http.process;
 
-import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.headers.HttpHeader;
 import com.adobe.http.models.HttpRequest;
 import com.adobe.http.models.HttpResponseStatus;
 import com.adobe.http.process.response.ResponseWriter;

@@ -1,9 +1,9 @@
 package com.adobe.http.models;
 
+import com.adobe.http.models.headers.HttpHeader;
+import com.adobe.http.models.headers.IfModifiedSince;
 import com.google.common.collect.Lists;
 import org.junit.Test;
-
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,10 +14,11 @@ public class HttpRequestTest {
 
     @Test
     public void shouldReturnInstant() {
+        final String date = "Sat, 29 Oct 1994 21:43:31 GMT";
         final HttpRequest request = HttpRequest.builder()
-                .headers(Lists.newArrayList(new HttpHeader("If-Modified-Since", "Sat, 29 Oct 1994 21:43:31 GMT")))
+                .headers(Lists.newArrayList(new HttpHeader("If-Modified-Since", date)))
                 .build();
-        final Instant expected = Instant.ofEpochSecond(783467011);
+        final IfModifiedSince expected = new IfModifiedSince(date);
         assertThat(request.getIfModifiedSince()).isPresent().contains(expected);
     }
 

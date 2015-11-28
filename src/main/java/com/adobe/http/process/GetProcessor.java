@@ -1,7 +1,7 @@
 package com.adobe.http.process;
 
 import com.adobe.http.HttpUtils;
-import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.headers.HttpHeader;
 import com.adobe.http.models.HttpRequest;
 import com.adobe.http.models.HttpResponseStatus;
 import com.adobe.http.process.response.AbstractResponseWriter;
@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Optional;
 
 /**
  * Created by jhutchins on 11/27/15.
@@ -32,7 +31,6 @@ import java.util.Optional;
 public class GetProcessor implements HttpProcessor {
 
     private static final ResponseWriter NOT_FOUND_WRITER = new StatusResponseWriter(HttpResponseStatus.NOT_FOUND);
-    private static final ResponseWriter NOT_MODIFIED_WRITER = new StatusResponseWriter(HttpResponseStatus.NOT_MODIFIED);
 
     private final Path base;
     private final EtagManager manager;
@@ -60,7 +58,7 @@ public class GetProcessor implements HttpProcessor {
         final String etag;
 
         try {
-             etag = manager.retrieve(target, lastModified);
+            etag = manager.retrieve(target, lastModified);
         } catch (Exception e) {
             return NOT_FOUND_WRITER;
         }
@@ -68,8 +66,17 @@ public class GetProcessor implements HttpProcessor {
         // Check we're not breaking out of the root dir
         if (!target.startsWith(this.base)) {
             return NOT_FOUND_WRITER;
-        } else if (request.getIfModifiedSince().map(instant -> !instant.isBefore(lastModified)).orElse(false)) {
-            return NOT_MODIFIED_WRITER;
+        } else if (!request.getIfNoneMatch().map(header -> header.noneMatch(etag)).orElse(true)) {
+            return new StatusResponseWriter(
+                    HttpResponseStatus.NOT_MODIFIED,
+                    new HttpHeader("ETag", etag),
+                    new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
+        } else if (!request.getIfNoneMatch().isPresent()
+                && !request.getIfModifiedSince().map(header -> header.isModified(lastModified)).orElse(true)) {
+            return new StatusResponseWriter(
+                    HttpResponseStatus.NOT_MODIFIED,
+                    new HttpHeader("ETag", etag),
+                    new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
         } else {
             return new GetResponseWriter(target, lastModified, etag);
         }

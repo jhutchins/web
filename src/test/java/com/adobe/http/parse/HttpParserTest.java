@@ -2,7 +2,7 @@ package com.adobe.http.parse;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.adobe.http.models.HttpHeader;
+import com.adobe.http.models.headers.HttpHeader;
 import com.adobe.http.models.HttpRequest;
 import com.google.common.collect.Lists;
 import org.junit.Before;

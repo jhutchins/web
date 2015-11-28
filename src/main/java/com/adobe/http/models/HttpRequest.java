@@ -1,15 +1,17 @@
 package com.adobe.http.models;
 
-import com.adobe.http.HttpUtils;
+import com.adobe.http.models.headers.HttpHeader;
+import com.adobe.http.models.headers.IfModifiedSince;
+import com.adobe.http.models.headers.IfNoneMatch;
 import com.beust.jcommander.internal.Maps;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Created by jhutchins on 11/25/15.
@@ -24,20 +26,27 @@ public class HttpRequest {
     private final List<HttpHeader> headers;
     private final String data;
 
-    private final Map<String, Object> parsedHeaders = Maps.newHashMap();
+    private final Map<String, Optional<? extends HttpHeader>> parsedHeaders = Maps.newHashMap();
 
-    public Optional<Instant> getIfModifiedSince() {
-        final String name = "If-Modified-Since";
-        Optional<Instant> time = (Optional<Instant>) parsedHeaders.get(name);
-        if (time == null) {
-            time = headers.stream()
+    private <T extends HttpHeader> Optional<T> getHeader(String name, Function<String, T> mapper) {
+        Optional<T> value = (Optional<T>) parsedHeaders.get(name);
+        if (value == null) {
+            value = headers.stream()
                     .filter(header -> header.getName().equals(name))
                     .findFirst()
                     .map(HttpHeader::getValue)
-                    .map(HttpUtils::covertStringToInstant);
-            parsedHeaders.put(name, time);
+                    .map(mapper);
+            parsedHeaders.put(name, value);
         }
-        return time;
+        return value;
+    }
+
+    public Optional<IfModifiedSince> getIfModifiedSince() {
+        return getHeader(IfModifiedSince.NAME, IfModifiedSince::new);
+    }
+
+    public Optional<IfNoneMatch> getIfNoneMatch() {
+        return getHeader(IfNoneMatch.NAME, IfNoneMatch::new);
     }
 
     public static class Builder {

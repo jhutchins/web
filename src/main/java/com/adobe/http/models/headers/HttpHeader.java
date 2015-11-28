@@ -1,4 +1,4 @@
-package com.adobe.http.models;
+package com.adobe.http.models.headers;
 
 import lombok.*;
 
