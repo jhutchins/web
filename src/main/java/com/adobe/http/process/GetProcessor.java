@@ -52,7 +52,7 @@ public class GetProcessor implements HttpProcessor {
      */
     @Override
     public ResponseWriter process(HttpRequest request, WritableByteChannel channel) {
-        final Path target = this.base.resolve(request.getPath()).normalize().toAbsolutePath();
+        final Path target = this.base.resolve("." + request.getPath()).normalize().toAbsolutePath();
         final Instant lastModified = Instant.ofEpochMilli(target.toFile().lastModified());
 
         // Check we're not breaking out of the root dir

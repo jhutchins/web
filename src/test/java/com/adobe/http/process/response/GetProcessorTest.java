@@ -13,6 +13,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -50,6 +52,7 @@ public class GetProcessorTest {
             return count;
         });
         when(request.getPath()).thenReturn("/a");
+        when(request.getIfModifiedSince()).thenReturn(Optional.empty());
     }
 
     @After
@@ -99,6 +102,26 @@ public class GetProcessorTest {
         Paths.get(BASE_DIR, "subDir").toFile().mkdirs();
         Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
         when(request.getPath()).thenReturn("/subDir/../a");
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        assertThat(response.toString()).contains("200 OK").contains(data);
+    }
+
+    @Test
+    public void testReturnsNotModifiedWhenItShould() throws Exception {
+        final String data = "The data";
+        Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
+        when(request.getIfModifiedSince()).thenReturn(Optional.of(Instant.now().plusSeconds(5)));
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        assertThat(response.toString()).contains("304 Not Modified").doesNotContain(data);
+    }
+
+    @Test
+    public void testDoesNotReturnsNotModifiedWhenItShouldNot() throws Exception {
+        final String data = "The data";
+        Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
+        when(request.getIfModifiedSince()).thenReturn(Optional.of(Instant.now().minusSeconds(5)));
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
         assertThat(response.toString()).contains("200 OK").contains(data);
