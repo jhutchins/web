@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
  * Created by jhutchins on 11/27/15.
  */
 public class GetProcessorTest {
-
     private static final String BASE_DIR = "./test/public";
 
     @Mock
@@ -90,6 +89,7 @@ public class GetProcessorTest {
         when(request.getPath()).thenReturn("/../a");
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
+
         assertThat(response.toString()).contains("404 Not Found").doesNotContain(data);
     }
 

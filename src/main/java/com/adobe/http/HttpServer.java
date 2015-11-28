@@ -30,6 +30,7 @@ public class HttpServer extends AbstractExecutionThreadService {
 
     public static final StatusResponseWriter BAD_REQUEST_RESPONSE_WRITER =
             new StatusResponseWriter(HttpResponseStatus.BAD_REQUEST);
+
     private final int port;
     private final int poolSize;
     private final HttpProcessorManager manager;

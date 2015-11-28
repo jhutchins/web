@@ -11,6 +11,7 @@ import lombok.Getter;
 public class HttpResponseStatus {
 
     public static final HttpResponseStatus OK = new HttpResponseStatus(200, "OK");
+    public static final HttpResponseStatus NOT_MODIFIED = new HttpResponseStatus(304, "Not Modified");
     public static final HttpResponseStatus BAD_REQUEST = new HttpResponseStatus(400, "Bad Request");
     public static final HttpResponseStatus NOT_FOUND = new HttpResponseStatus(404, "Not Found");
     public static final HttpResponseStatus NOT_ACCEPTABLE = new HttpResponseStatus(406, "Not Acceptable");
