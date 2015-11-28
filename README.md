@@ -1,6 +1,7 @@
 #Intro
 This is a simple file based web server. It supports GET requests to retrieve files stored at a configured location.
 
+Supports `If-None-Match` and `If-Modified-Since` headers in requests
 ## Build
 ```
 mvn install
