@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Created by jhutchins on 11/27/15.
@@ -34,12 +35,14 @@ public class GetProcessor implements HttpProcessor {
     private static final ResponseWriter NOT_MODIFIED_WRITER = new StatusResponseWriter(HttpResponseStatus.NOT_MODIFIED);
 
     private final Path base;
+    private final EtagManager manager;
 
     @Getter
     private final String type = "GET";
 
-    public GetProcessor(String base) {
+    public GetProcessor(String base, EtagManager manager) {
         this.base = Paths.get(base).normalize().toAbsolutePath();
+        this.manager = manager;
     }
 
     /**
@@ -54,6 +57,13 @@ public class GetProcessor implements HttpProcessor {
     public ResponseWriter process(HttpRequest request, WritableByteChannel channel) {
         final Path target = this.base.resolve("." + request.getPath()).normalize().toAbsolutePath();
         final Instant lastModified = Instant.ofEpochMilli(target.toFile().lastModified());
+        final String etag;
+
+        try {
+             etag = manager.retrieve(target, lastModified);
+        } catch (Exception e) {
+            return NOT_FOUND_WRITER;
+        }
 
         // Check we're not breaking out of the root dir
         if (!target.startsWith(this.base)) {
@@ -61,7 +71,7 @@ public class GetProcessor implements HttpProcessor {
         } else if (request.getIfModifiedSince().map(instant -> !instant.isBefore(lastModified)).orElse(false)) {
             return NOT_MODIFIED_WRITER;
         } else {
-            return new GetResponseWriter(target, lastModified);
+            return new GetResponseWriter(target, lastModified, etag);
         }
     }
 
@@ -70,15 +80,19 @@ public class GetProcessor implements HttpProcessor {
 
         private final Path path;
         private final Instant lastModified;
+        private final String etag;
 
         @Override
         public void write(WritableByteChannel channel) throws IOException {
             if (Files.exists(this.path)) {
                 final File file = this.path.toFile();
-                try (FileChannel fileChannel = new RandomAccessFile(file, "r").getChannel()) {
+                try (RandomAccessFile accessFile = new RandomAccessFile(file, "r");
+                     FileChannel fileChannel = accessFile.getChannel()) {
+
                     this.writeStatus(channel, HttpResponseStatus.OK);
                     this.writeHeaders(channel,
                             new HttpHeader("Content-Length", "" + file.length()),
+                            new HttpHeader("ETag", etag),
                             new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
                     fileChannel.transferTo(0, file.length(), channel);
                 }

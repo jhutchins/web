@@ -1,5 +1,6 @@
 package com.adobe.http;
 
+import com.adobe.http.process.EtagManager;
 import com.adobe.http.process.GetProcessor;
 import com.adobe.http.process.HttpProcessorManager;
 import com.beust.jcommander.JCommander;
@@ -22,9 +23,10 @@ public class Main {
         final HttpServerConfig config = JSON.std.beanFrom(HttpServerConfig.class, new FileInputStream(options.config));
 
         // Setup objects
-        final HttpProcessorManager manager = new HttpProcessorManager();
-        manager.addProcessor(new GetProcessor(config.getBaseDir()));
-        final HttpServer server = new HttpServer(config.getPort(), config.getPoolSize(), manager);
+        final HttpProcessorManager processorManager = new HttpProcessorManager();
+        final EtagManager etagManager = new EtagManager();
+        processorManager.addProcessor(new GetProcessor(config.getBaseDir(), etagManager));
+        final HttpServer server = new HttpServer(config.getPort(), config.getPoolSize(), processorManager);
 
         // Start
         server.startAsync();

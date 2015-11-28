@@ -1,6 +1,7 @@
 package com.adobe.http.process.response;
 
 import com.adobe.http.models.HttpRequest;
+import com.adobe.http.process.EtagManager;
 import com.adobe.http.process.GetProcessor;
 import org.junit.After;
 import org.junit.Before;
@@ -24,9 +25,12 @@ import static org.mockito.Mockito.*;
  */
 public class GetProcessorTest {
     private static final String BASE_DIR = "./test/public";
+    private static final String ETAG = "923466024";
 
     @Mock
     private WritableByteChannel channel;
+    @Mock
+    private EtagManager manager;
     @Mock
     private HttpRequest request;
 
@@ -39,7 +43,7 @@ public class GetProcessorTest {
 
         response = new StringBuilder();
         new File(BASE_DIR).mkdirs();
-        processor = new GetProcessor(BASE_DIR);
+        processor = new GetProcessor(BASE_DIR, manager);
 
         when(channel.isOpen()).thenReturn(true);
         when(channel.write(any(ByteBuffer.class))).thenAnswer(invocation -> {
@@ -51,6 +55,7 @@ public class GetProcessorTest {
             }
             return count;
         });
+        when(manager.retrieve(any(), any())).thenReturn(ETAG);
         when(request.getPath()).thenReturn("/a");
         when(request.getIfModifiedSince()).thenReturn(Optional.empty());
     }
@@ -82,7 +87,7 @@ public class GetProcessorTest {
         Files.write(Paths.get(BASE_DIR, "a"), data.getBytes());
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("200 OK").contains(data);
+        assertThat(response.toString()).contains("200 OK").contains(data).contains("Etag: " + ETAG);
     }
 
     @Test
@@ -104,7 +109,7 @@ public class GetProcessorTest {
         when(request.getPath()).thenReturn("/subDir/../a");
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("200 OK").contains(data);
+        assertThat(response.toString()).contains("200 OK").contains(data).contains("Etag: " + ETAG);
     }
 
     @Test
@@ -124,6 +129,6 @@ public class GetProcessorTest {
         when(request.getIfModifiedSince()).thenReturn(Optional.of(Instant.now().minusSeconds(5)));
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
-        assertThat(response.toString()).contains("200 OK").contains(data);
+        assertThat(response.toString()).contains("200 OK").contains(data).contains("Etag: " + ETAG);
     }
 }
