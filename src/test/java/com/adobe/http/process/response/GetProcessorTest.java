@@ -80,15 +80,32 @@ public class GetProcessorTest {
     }
 
     private void verifyNotFound() {
-        assertThat(response.toString()).contains("404 Not Found").doesNotContain(DATA);
+        assertThat(response.toString())
+                .contains("404 Not Found")
+                .doesNotContain(DATA)
+                .contains("Date: ")
+                .contains("Server: ");
     }
 
     private void verifyNotModified() {
-        assertThat(response.toString()).contains("304 Not Modified").doesNotContain(DATA).contains("ETag: " + ETAG);
+        assertThat(response.toString())
+                .contains("304 Not Modified")
+                .doesNotContain(DATA)
+                .contains("ETag: " + ETAG)
+                .contains("Date: ")
+                .contains("Last-Modified: ")
+                .contains("Server: ");
     }
 
     private void verifyOk() {
-        assertThat(response.toString()).contains("200 OK").contains(DATA).contains("ETag: " + ETAG);
+        assertThat(response.toString())
+                .contains("200 OK")
+                .contains(DATA)
+                .contains("ETag: " + ETAG)
+                .contains("Date: ")
+                .contains("Last-Modified: ")
+                .contains("Server: ")
+                .contains("Content-Length: " + DATA.length());
     }
 
     @Test
