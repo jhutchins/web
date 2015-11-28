@@ -4,6 +4,7 @@ import com.adobe.http.HttpUtils;
 import com.adobe.http.models.HttpRequest;
 import com.adobe.http.models.headers.IfModifiedSince;
 import com.adobe.http.models.headers.IfNoneMatch;
+import com.adobe.http.models.headers.InvalidHeaderException;
 import com.adobe.http.process.EtagManager;
 import com.adobe.http.process.GetProcessor;
 import org.junit.After;
@@ -189,6 +190,24 @@ public class GetProcessorTest {
                 HttpUtils.convertInstantToString(Instant.now().plusSeconds(5)));
         when(request.getIfModifiedSince()).thenReturn(Optional.of(modifiedSince));
         when(request.getIfNoneMatch()).thenReturn(Optional.of(new IfNoneMatch("\"no match\"")));
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        verifyOk();
+    }
+
+    @Test
+    public void testReturnsOkWhenBadIfNoneMatchHeader() throws Exception {
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        when(request.getIfNoneMatch()).thenThrow(new InvalidHeaderException("If-None-Match", ""));
+        ResponseWriter writer = processor.process(request, channel);
+        writer.write(channel);
+        verifyOk();
+    }
+
+    @Test
+    public void testReturnsOkWhenBadIfModifiedSinceHeader() throws Exception {
+        Files.write(Paths.get(BASE_DIR, "a"), DATA.getBytes());
+        when(request.getIfModifiedSince()).thenThrow(new InvalidHeaderException("If-Modified-Since", ""));
         ResponseWriter writer = processor.process(request, channel);
         writer.write(channel);
         verifyOk();

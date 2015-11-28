@@ -4,11 +4,13 @@ import com.adobe.http.HttpUtils;
 import com.adobe.http.models.headers.HttpHeader;
 import com.adobe.http.models.HttpRequest;
 import com.adobe.http.models.HttpResponseStatus;
+import com.adobe.http.models.headers.InvalidHeaderException;
 import com.adobe.http.process.response.AbstractResponseWriter;
 import com.adobe.http.process.response.ResponseWriter;
 import com.adobe.http.process.response.StatusResponseWriter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,9 +30,11 @@ import java.time.Instant;
  * Return a writer that will respond with a 200 OK and the file (transfered using zero copy) if the file exists or
  * a 404 Not Found response if the file can't be found on the file system within the base directory.
  */
+@Slf4j
 public class GetProcessor implements HttpProcessor {
 
     private static final ResponseWriter NOT_FOUND_WRITER = new StatusResponseWriter(HttpResponseStatus.NOT_FOUND);
+    private static final ResponseWriter BAD = new StatusResponseWriter(HttpResponseStatus.NOT_FOUND);
 
     private final Path base;
     private final EtagManager manager;
@@ -63,24 +67,29 @@ public class GetProcessor implements HttpProcessor {
             return NOT_FOUND_WRITER;
         }
 
-        if (!target.startsWith(this.base)) {
-            // Check we're not breaking out of the root dir
-            return NOT_FOUND_WRITER;
-        } else if (!request.getIfNoneMatch().map(header -> header.noneMatch(etag)).orElse(true)) {
-            // Return 304 is ETag matches
-            return new StatusResponseWriter(
-                    HttpResponseStatus.NOT_MODIFIED,
-                    new HttpHeader("ETag", etag),
-                    new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
-        } else if (!request.getIfNoneMatch().isPresent()
-                && !request.getIfModifiedSince().map(header -> header.isModified(lastModified)).orElse(true)) {
-            // Return 304 is not modified and no If-None-Match
-            return new StatusResponseWriter(
-                    HttpResponseStatus.NOT_MODIFIED,
-                    new HttpHeader("ETag", etag),
-                    new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
-        } else {
-            // Standard response
+        try {
+            if (!target.startsWith(this.base)) {
+                // Check we're not breaking out of the root dir
+                return NOT_FOUND_WRITER;
+            } else if (!request.getIfNoneMatch().map(header -> header.noneMatch(etag)).orElse(true)) {
+                // Return 304 is ETag matches
+                return new StatusResponseWriter(
+                        HttpResponseStatus.NOT_MODIFIED,
+                        new HttpHeader("ETag", etag),
+                        new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
+            } else if (!request.getIfNoneMatch().isPresent()
+                    && !request.getIfModifiedSince().map(header -> header.isModified(lastModified)).orElse(true)) {
+                // Return 304 is not modified and no If-None-Match
+                return new StatusResponseWriter(
+                        HttpResponseStatus.NOT_MODIFIED,
+                        new HttpHeader("ETag", etag),
+                        new HttpHeader("Last-Modified", HttpUtils.convertInstantToString(lastModified)));
+            } else {
+                // Standard response
+                return new GetResponseWriter(target, lastModified, etag);
+            }
+        } catch (InvalidHeaderException e) {
+            log.warn("Bad header", e);
             return new GetResponseWriter(target, lastModified, etag);
         }
     }
