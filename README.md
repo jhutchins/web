@@ -27,3 +27,21 @@ For example
     "poolSize": 100
 }
 ```
+
+##Performance
+Included is a script for running performance testing. The results of running these tests on a MacBook Pro with a 3.1 GHz Intel Core i7 processor and 16 GB 1867 MHz DDR3 RAM are
+```Bash
+./test.sh
+Parallel Test 100 requests for 10MB file
+
+real	0m0.887s
+user	0m0.652s
+sys	    0m1.225s
+
+
+Sequential Test 100 requests for 10MB file
+
+real	0m1.855s
+user	0m0.470s
+sys	    0m0.838s
+```
